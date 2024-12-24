@@ -1,6 +1,6 @@
+import { ExpenseProvider } from "@/contexts/ExpenseContext";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { ExpenseProvider } from "@/contexts/ExpenseContext"; // Import the ExpenseProvider
 import "./globals.css";
 
 const geistSans = localFont({
@@ -8,6 +8,7 @@ const geistSans = localFont({
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
@@ -21,18 +22,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Wrap children with ExpenseProvider */}
-        <ExpenseProvider>
-          {children}
-        </ExpenseProvider>
+        <ExpenseProvider>{children}</ExpenseProvider>
       </body>
     </html>
   );
