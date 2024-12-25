@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useState } from "react"
 import {
@@ -22,11 +22,11 @@ import {
 import { useToast } from "@/components/ui/use-toast"
 
 export function ExpenseList({ limit }: { limit?: number }) {
-  const { expenses, deleteExpense } = useExpenses()
+  const { filteredExpenses, deleteExpense } = useExpenses()
   const [editingExpense, setEditingExpense] = useState<string | null>(null)
   const { toast } = useToast()
 
-  const displayedExpenses = limit ? expenses.slice(0, limit) : expenses
+  const displayedExpenses = limit ? filteredExpenses.slice(0, limit) : filteredExpenses
 
   const handleDelete = (id: string) => {
     deleteExpense(id)

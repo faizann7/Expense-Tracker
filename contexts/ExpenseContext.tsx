@@ -1,89 +1,132 @@
-"use client";
+"use client"
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
 type Expense = {
-  id: string;
-  amount: number;
-  category: string;
-  notes?: string;
-  date: string;
-};
+  id: string
+  amount: number
+  category: string
+  notes?: string
+  date: string
+}
+
+type FilterCriteria = {
+  dateFrom: string
+  dateTo: string
+  category: string
+}
+
+type SortCriteria = {
+  field: keyof Expense
+  direction: 'asc' | 'desc'
+}
 
 type ExpenseContextType = {
-  expenses: Expense[];
-  addExpense: (expense: Omit<Expense, "id">) => void;
-  updateExpense: (id: string, expense: Omit<Expense, "id">) => void;
-  deleteExpense: (id: string) => void;
-};
+  expenses: Expense[]
+  filteredExpenses: Expense[]
+  addExpense: (expense: Omit<Expense, 'id'>) => void
+  updateExpense: (id: string, expense: Omit<Expense, 'id'>) => void
+  deleteExpense: (id: string) => void
+  setFilters: (filters: FilterCriteria) => void
+  setSort: (sort: SortCriteria) => void
+  filters: FilterCriteria
+  sort: SortCriteria
+}
 
-const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined);
+const ExpenseContext = createContext<ExpenseContextType | undefined>(undefined)
 
 export const useExpenses = () => {
-  const context = useContext(ExpenseContext);
+  const context = useContext(ExpenseContext)
   if (!context) {
-    throw new Error("useExpenses must be used within an ExpenseProvider");
+    throw new Error('useExpenses must be used within an ExpenseProvider')
   }
-  return context;
-};
+  return context
+}
 
-export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [expenses, setExpenses] = useState<Expense[]>(() => {
+    const storedExpenses = localStorage.getItem('expenses')
+    return storedExpenses ? JSON.parse(storedExpenses) : []
+  })
+  const [filters, setFilters] = useState<FilterCriteria>({
+    dateFrom: '',
+    dateTo: '',
+    category: 'all'
+  })
+  const [sort, setSort] = useState<SortCriteria>({
+    field: 'date',
+    direction: 'desc'
+  })
 
-  // Helper function to safely parse JSON
-  const safeParseJSON = (value: string | null): Expense[] => {
-    try {
-      return value ? JSON.parse(value) : [];
-    } catch (error) {
-      console.error("Failed to parse JSON from localStorage:", error);
-      return [];
-    }
-  };
-
-  // Load expenses from localStorage when the component mounts
   useEffect(() => {
-    const storedExpenses = localStorage.getItem("expenses");
-    const parsedExpenses = safeParseJSON(storedExpenses);
-    if (parsedExpenses.length > 0) {
-      console.log("Loaded expenses from localStorage:", parsedExpenses);
-      setExpenses(parsedExpenses);
-    }
-  }, []);
+    localStorage.setItem('expenses', JSON.stringify(expenses))
+  }, [expenses])
 
-  // Save expenses to localStorage whenever the `expenses` state changes
-  useEffect(() => {
-    try {
-      console.log("Saving expenses to localStorage:", expenses);
-      localStorage.setItem("expenses", JSON.stringify(expenses));
-    } catch (error) {
-      console.error("Error saving expenses to localStorage:", error);
-    }
-  }, [expenses]);
+  const addExpense = (expense: Omit<Expense, 'id'>) => {
+    const newExpense = { ...expense, id: Date.now().toString() }
+    setExpenses((prevExpenses) => [...prevExpenses, newExpense])
+  }
 
-  const addExpense = (expense: Omit<Expense, "id">) => {
-    const newExpense = { ...expense, id: Date.now().toString() };
-    setExpenses((prev) => [...prev, newExpense]);
-  };
-
-  const updateExpense = (id: string, updatedExpense: Omit<Expense, "id">) => {
-    setExpenses((prev) =>
-      prev.map((expense) =>
+  const updateExpense = (id: string, updatedExpense: Omit<Expense, 'id'>) => {
+    setExpenses((prevExpenses) =>
+      prevExpenses.map((expense) =>
         expense.id === id ? { ...updatedExpense, id } : expense
       )
-    );
-  };
+    )
+  }
 
   const deleteExpense = (id: string) => {
-    setExpenses((prev) => prev.filter((expense) => expense.id !== id));
-  };
+    setExpenses((prevExpenses) => prevExpenses.filter((expense) => expense.id !== id))
+  }
+
+  const filteredExpenses = expenses.filter(expense => {
+    if (filters.category !== 'all' && expense.category !== filters.category) {
+      return false
+    }
+
+    if (filters.dateFrom && expense.date < filters.dateFrom) {
+      return false
+    }
+
+    if (filters.dateTo && expense.date > filters.dateTo) {
+      return false
+    }
+
+    return true
+  }).sort((a, b) => {
+    const aValue = a[sort.field]
+    const bValue = b[sort.field]
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sort.direction === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue)
+    }
+
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return sort.direction === 'asc'
+        ? aValue - bValue
+        : bValue - aValue
+    }
+
+    return 0
+  })
 
   return (
     <ExpenseContext.Provider
-      value={{ expenses, addExpense, updateExpense, deleteExpense }}
+      value={{
+        expenses,
+        filteredExpenses,
+        addExpense,
+        updateExpense,
+        deleteExpense,
+        filters,
+        setFilters,
+        sort,
+        setSort
+      }}
     >
       {children}
     </ExpenseContext.Provider>
-  );
-};
+  )
+}
