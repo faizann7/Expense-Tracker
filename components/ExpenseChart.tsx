@@ -95,7 +95,7 @@ export function ExpenseChart() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">Total:</span>
-                    <span>${data.value?.toFixed(2)}</span>
+                    <span>${typeof data.value === 'number' ? data.value.toFixed(2) : data.value}</span>
                   </div>
                 </div>
               </ChartTooltipContent>

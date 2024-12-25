@@ -29,6 +29,7 @@ type ExpenseContextType = {
   deleteExpense: (id: string) => void
   setFilters: (filters: FilterCriteria) => void
   setSort: (sort: SortCriteria) => void
+  resetFilters: () => void
   filters: FilterCriteria
   sort: SortCriteria
 }
@@ -43,20 +44,24 @@ export const useExpenses = () => {
   return context
 }
 
+const defaultFilters: FilterCriteria = {
+  dateFrom: '',
+  dateTo: '',
+  category: 'all'
+}
+
+const defaultSort: SortCriteria = {
+  field: 'date',
+  direction: 'desc'
+}
+
 export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [expenses, setExpenses] = useState<Expense[]>(() => {
     const storedExpenses = localStorage.getItem('expenses')
     return storedExpenses ? JSON.parse(storedExpenses) : []
   })
-  const [filters, setFilters] = useState<FilterCriteria>({
-    dateFrom: '',
-    dateTo: '',
-    category: 'all'
-  })
-  const [sort, setSort] = useState<SortCriteria>({
-    field: 'date',
-    direction: 'desc'
-  })
+  const [filters, setFilters] = useState<FilterCriteria>(defaultFilters)
+  const [sort, setSort] = useState<SortCriteria>(defaultSort)
 
   useEffect(() => {
     localStorage.setItem('expenses', JSON.stringify(expenses))
@@ -77,6 +82,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const deleteExpense = (id: string) => {
     setExpenses((prevExpenses) => prevExpenses.filter((expense) => expense.id !== id))
+  }
+
+  const resetFilters = () => {
+    setFilters(defaultFilters)
+    setSort(defaultSort)
   }
 
   const filteredExpenses = expenses.filter(expense => {
@@ -120,10 +130,11 @@ export const ExpenseProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addExpense,
         updateExpense,
         deleteExpense,
-        filters,
         setFilters,
-        sort,
-        setSort
+        setSort,
+        resetFilters,
+        filters,
+        sort
       }}
     >
       {children}
