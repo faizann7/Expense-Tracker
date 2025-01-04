@@ -13,22 +13,18 @@ import {
 } from "@/components/ui/breadcrumb"
 
 const routeNameMap: { [key: string]: string } = {
-    '': 'Dashboard',
     'dashboard': 'Dashboard',
     'expenses': 'Expenses',
     'trends': 'Trends',
     'add': 'Add Expense',
-    'edit': 'Edit Expense',
-    'categories': 'Categories',
-    'settings': 'Settings',
-    'profile': 'Profile',
+    'edit': 'Edit Expense'
 }
 
 export function Breadcrumbs() {
     const pathname = usePathname()
     const segments = pathname.split('/').filter(Boolean)
 
-    if (pathname === '/') {
+    if (pathname === '/dashboard') {
         return (
             <Breadcrumb>
                 <BreadcrumbList>
@@ -44,7 +40,7 @@ export function Breadcrumbs() {
         <Breadcrumb>
             <BreadcrumbList>
                 <BreadcrumbItem>
-                    <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator>
                     <ChevronRight className="h-4 w-4" />

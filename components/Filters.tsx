@@ -7,6 +7,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Calendar as CalendarIcon, X } from "lucide-react"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
+import { useExpenses } from "@/contexts/ExpenseContext"
 import {
   Select,
   SelectContent,
@@ -14,176 +18,101 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { useExpenses } from "@/contexts/ExpenseContext"
-import { ArrowUpDown, CalendarIcon, X } from 'lucide-react'
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
-import { cn } from "@/lib/utils"
-import { DateRange } from "react-day-picker"
 import { useState } from "react"
-
-const datePresets = [
-  { label: "Last 3 days", getValue: () => ({ from: subDays(new Date(), 2), to: new Date() }) },
-  { label: "Last 7 days", getValue: () => ({ from: subDays(new Date(), 6), to: new Date() }) },
-  { label: "Last 30 days", getValue: () => ({ from: subDays(new Date(), 29), to: new Date() }) },
-  { label: "This week", getValue: () => ({ from: startOfWeek(new Date()), to: endOfWeek(new Date()) }) },
-  { label: "This month", getValue: () => ({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }) },
-]
-
-const categoryColors = {
-  food: "bg-red-500",
-  transportation: "bg-blue-500",
-  utilities: "bg-green-500",
-  entertainment: "bg-yellow-500",
-  other: "bg-purple-500",
-}
+import { DateRange } from "react-day-picker"
 
 export function Filters() {
-  const { filters, setFilters, sort, setSort, resetFilters } = useExpenses()
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: filters.dateFrom ? new Date(filters.dateFrom) : undefined,
-    to: filters.dateTo ? new Date(filters.dateTo) : undefined,
-  })
+  const { categories, setFilters, clearFilters } = useExpenses()
+  const [date, setDate] = useState<DateRange | undefined>()
+  const [category, setCategory] = useState<string>("all")
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters({ ...filters, [field]: value })
-  }
-
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    setDate(range)
+  const handleDateSelect = (dateRange: DateRange | undefined) => {
+    setDate(dateRange)
     setFilters({
-      ...filters,
-      dateFrom: range?.from ? format(range.from, 'yyyy-MM-dd') : '',
-      dateTo: range?.to ? format(range.to, 'yyyy-MM-dd') : '',
+      dateRange,
+      category: category === "all" ? undefined : category
     })
   }
 
-  const toggleSort = (field: string) => {
-    setSort({
-      field: field as any,
-      direction: sort.direction === 'asc' ? 'desc' : 'asc'
+  const handleCategorySelect = (selectedCategory: string) => {
+    setCategory(selectedCategory)
+    setFilters({
+      dateRange: date,
+      category: selectedCategory === "all" ? undefined : selectedCategory
     })
   }
 
   const handleReset = () => {
-    resetFilters()
     setDate(undefined)
+    setCategory("all")
+    clearFilters()
   }
 
   return (
-    <div className="space-y-4 mb-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="date"
-              variant={"outline"}
-              className={cn(
-                "w-[300px] justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date?.from ? (
-                date.to ? (
-                  <>
-                    {format(date.from, "LLL dd, y")} -{" "}
-                    {format(date.to, "LLL dd, y")}
-                  </>
-                ) : (
-                  format(date.from, "LLL dd, y")
-                )
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className={cn(
+              "w-[300px] justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "LLL dd, y")} -{" "}
+                  {format(date.to, "LLL dd, y")}
+                </>
               ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <div className="border-b border-gray-200 p-3">
-              <div className="flex gap-2 flex-wrap">
-                {datePresets.map((preset) => (
-                  <Button
-                    key={preset.label}
-                    onClick={() => handleDateRangeChange(preset.getValue())}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={handleDateRangeChange}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
-        <Select
-          value={filters.category}
-          onValueChange={(value) => handleFilterChange('category', value)}
+                format(date.from, "LLL dd, y")
+              )
+            ) : (
+              <span>Pick a date range</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={handleDateSelect}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <Select
+        value={category}
+        onValueChange={handleCategorySelect}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Category" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Categories</SelectItem>
+          {categories.map((category) => (
+            <SelectItem key={category.id} value={category.name}>
+              {category.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {(date || category !== "all") && (
+        <Button
+          variant="ghost"
+          onClick={handleReset}
+          className="h-8 px-2 lg:px-3"
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {Object.entries(categoryColors).map(([category, color]) => (
-              <SelectItem key={category} value={category}>
-                <div className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full mr-2 ${color}`}></div>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="outline" onClick={handleReset}>
-                Reset Filters
-                <X className="ml-2 h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Clear all filters and sorting</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      <div className="flex gap-2">
-        {['date', 'amount', 'category'].map((field) => (
-          <TooltipProvider key={field}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => toggleSort(field)}
-                  className={sort.field === field ? 'bg-accent' : ''}
-                >
-                  {field.charAt(0).toUpperCase() + field.slice(1)}
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Sort by {field}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ))}
-      </div>
+          Reset
+          <X className="ml-2 h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }

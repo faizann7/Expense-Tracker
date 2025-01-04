@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,54 +20,78 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { useExpenses } from "@/contexts/ExpenseContext"
-import { useToast } from "@/components/ui/use-toast"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { Textarea } from "@/components/ui/textarea"
 
 const formSchema = z.object({
-  amount: z.string().min(1, "Amount is required.").refine(
-    (val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
-    "Amount must be a positive number."
-  ),
-  category: z.string().min(1, "Category is required."),
+  date: z.date({
+    required_error: "A date is required",
+  }),
+  category: z.string().min(1, "Please select a category"),
+  amount: z.string().min(1, "Amount is required"),
   notes: z.string().optional(),
-  date: z.string().min(1, "Date is required."),
 })
 
-export function AddExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
-  const { addExpense } = useExpenses()
-  const { toast } = useToast()
+interface AddExpenseFormProps {
+  onSuccess: () => void
+  initialData?: {
+    id: string
+    date: string
+    category: string
+    amount: number
+    notes: string
+  }
+  mode?: "add" | "edit"
+}
+
+export function AddExpenseForm({ onSuccess, initialData, mode = "add" }: AddExpenseFormProps) {
+  const { addExpense, updateExpense, categories } = useExpenses()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      amount: "",
+    defaultValues: initialData ? {
+      date: new Date(initialData.date),
+      category: initialData.category,
+      amount: initialData.amount.toString(),
+      notes: initialData.notes,
+    } : {
+      date: new Date(),
       category: "",
+      amount: "",
       notes: "",
-      date: new Date().toISOString().split('T')[0],
     },
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    addExpense({
-      amount: parseFloat(values.amount),
+    const expenseData = {
+      date: values.date.toISOString().split('T')[0],
       category: values.category,
-      notes: values.notes,
-      date: values.date,
-    })
-    form.reset()
-    toast({
-      title: "Expense added",
-      description: "Your expense has been successfully added.",
-    })
-    if (onSuccess) {
-      onSuccess()
+      amount: parseFloat(values.amount),
+      notes: values.notes || "",
     }
+
+    if (mode === "edit" && initialData) {
+      updateExpense(initialData.id, expenseData)
+    } else {
+      addExpense(expenseData)
+    }
+
+    onSuccess()
+    form.reset()
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="amount"
@@ -78,9 +101,6 @@ export function AddExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
               <FormControl>
                 <Input type="number" step="0.01" placeholder="0.00" {...field} />
               </FormControl>
-              <FormDescription>
-                Enter the expense amount.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -98,16 +118,13 @@ export function AddExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="food">Food & Dining</SelectItem>
-                  <SelectItem value="transportation">Transportation</SelectItem>
-                  <SelectItem value="utilities">Utilities</SelectItem>
-                  <SelectItem value="entertainment">Entertainment</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.name}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              <FormDescription>
-                Select the expense category.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -138,7 +155,7 @@ export function AddExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">Save Expense</Button>
+        <Button type="submit">{mode === "edit" ? "Update" : "Add"} Expense</Button>
       </form>
     </Form>
   )

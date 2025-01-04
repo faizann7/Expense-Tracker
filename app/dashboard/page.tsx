@@ -1,55 +1,42 @@
-import { AppSidebar } from "../../components/app-sidebar"
-import { ExpenseDashboard } from "../../components/expense-dashboard"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+'use client'
 
-export default function Page() {
+import { ExpenseDashboard } from "@/components/expense-dashboard"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PieChart } from "@/components/PieChart"
+import { ExpenseChart } from "@/components/ExpenseChart"
+import { ViewOnlyExpenseTable } from "@/components/ViewOnlyExpenseTable"
+
+export default function DashboardPage() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Overview</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <ExpenseDashboard />
-          <div className="grid auto-rows-min gap-4 md:grid-cols-2">
-            <div className="aspect-video rounded-xl bg-muted/50">
-              {/* Placeholder for expense chart */}
-            </div>
-            <div className="aspect-video rounded-xl bg-muted/50">
-              {/* Placeholder for recent transactions */}
-            </div>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="space-y-6">
+      <ExpenseDashboard />
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Expense Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PieChart />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Expenses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseChart />
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ViewOnlyExpenseTable limit={5} showRecent={true} />
+        </CardContent>
+      </Card>
+    </div>
   )
 }
 

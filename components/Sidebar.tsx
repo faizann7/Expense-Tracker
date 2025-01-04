@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, LineChart, Receipt, Wallet } from "lucide-react"
+import { LayoutDashboard, LineChart, Receipt, Wallet, Tags } from "lucide-react"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -33,9 +33,9 @@ export function Sidebar({ className }: SidebarProps) {
                         <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground">
                             Main
                         </h2>
-                        <Link href="/">
+                        <Link href="/dashboard">
                             <Button
-                                variant={pathname === "/" ? "secondary" : "ghost"}
+                                variant={pathname === "/dashboard" ? "secondary" : "ghost"}
                                 className="w-full justify-start"
                             >
                                 <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -49,6 +49,15 @@ export function Sidebar({ className }: SidebarProps) {
                             >
                                 <Receipt className="mr-2 h-4 w-4" />
                                 Expenses
+                            </Button>
+                        </Link>
+                        <Link href="/categories">
+                            <Button
+                                variant={pathname === "/categories" ? "secondary" : "ghost"}
+                                className="w-full justify-start"
+                            >
+                                <Tags className="mr-2 h-4 w-4" />
+                                Categories
                             </Button>
                         </Link>
                         <Link href="/trends">
