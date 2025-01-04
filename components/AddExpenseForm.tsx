@@ -12,7 +12,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -20,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { useExpenses } from "@/contexts/ExpenseContext"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
@@ -30,26 +31,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { Textarea } from "@/components/ui/textarea"
 
 const formSchema = z.object({
+  amount: z.string().min(1, "Amount is required").transform(Number),
+  category: z.string().min(1, "Category is required"),
   date: z.date({
-    required_error: "A date is required",
+    required_error: "Date is required",
   }),
-  category: z.string().min(1, "Please select a category"),
-  amount: z.string().min(1, "Amount is required"),
   notes: z.string().optional(),
 })
 
 interface AddExpenseFormProps {
-  onSuccess: () => void
-  initialData?: {
-    id: string
-    date: string
-    category: string
-    amount: number
-    notes: string
-  }
+  onSuccess?: () => void
+  initialData?: any
   mode?: "add" | "edit"
 }
 
@@ -59,34 +53,33 @@ export function AddExpenseForm({ onSuccess, initialData, mode = "add" }: AddExpe
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: initialData ? {
+      ...initialData,
       date: new Date(initialData.date),
-      category: initialData.category,
-      amount: initialData.amount.toString(),
-      notes: initialData.notes,
+      amount: initialData.amount.toString()
     } : {
-      date: new Date(),
-      category: "",
       amount: "",
-      notes: "",
+      category: "",
+      date: new Date(),
+      notes: ""
     },
   })
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const expenseData = {
-      date: values.date.toISOString().split('T')[0],
-      category: values.category,
-      amount: parseFloat(values.amount),
-      notes: values.notes || "",
-    }
-
     if (mode === "edit" && initialData) {
-      updateExpense(initialData.id, expenseData)
+      updateExpense(initialData.id, {
+        ...values,
+        amount: Number(values.amount),
+        date: values.date.toISOString(),
+      })
     } else {
-      addExpense(expenseData)
+      addExpense({
+        ...values,
+        amount: Number(values.amount),
+        date: values.date.toISOString(),
+      })
     }
-
-    onSuccess()
     form.reset()
+    onSuccess?.()
   }
 
   return (
@@ -99,12 +92,17 @@ export function AddExpenseForm({ onSuccess, initialData, mode = "add" }: AddExpe
             <FormItem>
               <FormLabel>Amount</FormLabel>
               <FormControl>
-                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                <Input
+                  type="number"
+                  placeholder="Enter amount"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="category"
@@ -129,19 +127,49 @@ export function AddExpenseForm({ onSuccess, initialData, mode = "add" }: AddExpe
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="date"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="flex flex-col">
               <FormLabel>Date</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} />
-              </FormControl>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <FormMessage />
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="notes"
@@ -149,13 +177,19 @@ export function AddExpenseForm({ onSuccess, initialData, mode = "add" }: AddExpe
             <FormItem>
               <FormLabel>Notes (Optional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Add any additional notes here." {...field} />
+                <Textarea
+                  placeholder="Add any additional notes here."
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">{mode === "edit" ? "Update" : "Add"} Expense</Button>
+
+        <Button type="submit">
+          {mode === "edit" ? "Update" : "Add"} Expense
+        </Button>
       </form>
     </Form>
   )

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useExpenses } from "@/contexts/ExpenseContext"
 import { format } from "date-fns"
+import { DateRange } from "react-day-picker"
 
 export type Expense = {
     id: string
@@ -86,29 +87,27 @@ export const columns: ColumnDef<Expense>[] = [
 interface ViewOnlyExpenseTableProps {
     limit?: number
     showRecent?: boolean
+    dateRange?: DateRange
 }
 
-export function ViewOnlyExpenseTable({ limit, showRecent = true }: ViewOnlyExpenseTableProps) {
+export function ViewOnlyExpenseTable({ limit, showRecent, dateRange }: ViewOnlyExpenseTableProps) {
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-    const { filteredExpenses } = useExpenses()
+    const { expenses } = useExpenses()
 
-    // Sort expenses by date (most recent first) if showRecent is true
-    const sortedExpenses = React.useMemo(() => {
-        if (showRecent) {
-            return [...filteredExpenses].sort((a, b) =>
-                new Date(b.date).getTime() - new Date(a.date).getTime()
-            )
-        }
-        return filteredExpenses
-    }, [filteredExpenses, showRecent])
+    const filteredExpenses = expenses
+        .filter(expense => {
+            if (!dateRange?.from || !dateRange?.to) return true
+            const expenseDate = new Date(expense.date)
+            return expenseDate >= dateRange.from && expenseDate <= dateRange.to
+        })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
-    // Apply limit if specified
-    const tableData = limit ? sortedExpenses.slice(0, limit) : sortedExpenses
+    const displayExpenses = limit ? filteredExpenses.slice(0, limit) : filteredExpenses
 
     const table = useReactTable({
-        data: tableData,
+        data: displayExpenses,
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -123,6 +122,19 @@ export function ViewOnlyExpenseTable({ limit, showRecent = true }: ViewOnlyExpen
             columnVisibility,
         },
     })
+
+    if (displayExpenses.length === 0) {
+        return (
+            <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-8 text-center animate-in fade-in-50">
+                <p className="text-sm text-muted-foreground">No expenses found</p>
+                {dateRange?.from && dateRange?.to && (
+                    <p className="text-xs text-muted-foreground">
+                        Try selecting a different date range
+                    </p>
+                )}
+            </div>
+        )
+    }
 
     return (
         <div className="w-full">
