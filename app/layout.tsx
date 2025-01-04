@@ -37,8 +37,10 @@ export default function RootLayout({
             </aside>
             <div className="flex flex-1 flex-col">
               <Header />
-              <main className="flex-1 overflow-y-auto p-6">
-                {children}
+              <main className="flex-1">
+                <div className="container mx-auto p-6">
+                  {children}
+                </div>
               </main>
             </div>
           </div>

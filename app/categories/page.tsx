@@ -2,22 +2,18 @@
 
 import { AddCategoryDialog } from "@/components/AddCategoryDialog"
 import { CategoryDataTable } from "@/components/CategoryDataTable"
+import { PageHeader } from "@/components/page-header"
 
-export default function Categories() {
+export default function CategoriesPage() {
     return (
-        <div className="p-6">
-            <div className="flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold">Categories</h1>
-                        <p className="text-muted-foreground mt-2">
-                            Manage your expense categories here.
-                        </p>
-                    </div>
-                    <AddCategoryDialog />
-                </div>
-                <CategoryDataTable />
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Categories"
+                subtitle="Manage your expense categories"
+            >
+                <AddCategoryDialog />
+            </PageHeader>
+            <CategoryDataTable />
         </div>
     )
 } 

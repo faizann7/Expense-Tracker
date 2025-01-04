@@ -3,21 +3,19 @@
 import { AddExpenseDialog } from "@/components/AddExpenseDialog"
 import { ExpenseDataTable } from "@/components/ExpenseDataTable"
 import { Filters } from "@/components/Filters"
+import { PageHeader } from "@/components/page-header"
 
-export default function Expenses() {
+export default function ExpensesPage() {
     return (
-        <div className="p-6">
-            <div className="flex flex-col gap-6">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold">Expenses</h1>
-                    <AddExpenseDialog />
-                </div>
-                <p className="text-muted-foreground">
-                    Here's a list of your expenses for this month!
-                </p>
-                <Filters />
-                <ExpenseDataTable />
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Expenses"
+                subtitle="Manage and track your expenses"
+            >
+                <AddExpenseDialog />
+            </PageHeader>
+            <Filters />
+            <ExpenseDataTable />
         </div>
     )
 } 

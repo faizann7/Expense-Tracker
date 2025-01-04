@@ -6,6 +6,7 @@ import { PieChart } from "@/components/PieChart"
 import { ExpenseTrendChart } from "@/components/charts/expense-trend"
 import { ViewOnlyExpenseTable } from "@/components/ViewOnlyExpenseTable"
 import { DashboardDateRange } from "@/components/dashboard/date-range"
+import { PageHeader } from "@/components/page-header"
 import { useState } from "react"
 import { DateRange } from "react-day-picker"
 
@@ -17,10 +18,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Overview of your expenses"
+      >
         <DashboardDateRange onRangeChange={setDateRange} />
-      </div>
+      </PageHeader>
       <ExpenseDashboard dateRange={dateRange} />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         <Card className="w-full">
