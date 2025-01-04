@@ -1,5 +1,6 @@
 import { ExpenseProvider } from "@/contexts/ExpenseContext";
 import { Sidebar } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -27,16 +28,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ExpenseProvider>
           <div className="flex min-h-screen">
             <aside className="hidden w-64 border-r bg-background md:block">
               <Sidebar />
             </aside>
-            <main className="flex-1 overflow-y-auto">
-              {children}
-            </main>
+            <div className="flex flex-1 flex-col">
+              <Header />
+              <main className="flex-1 overflow-y-auto p-6">
+                {children}
+              </main>
+            </div>
           </div>
         </ExpenseProvider>
       </body>
