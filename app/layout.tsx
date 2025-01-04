@@ -4,6 +4,7 @@ import { Header } from "@/components/Header";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { SettingsProvider } from "@/contexts/SettingsContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,21 +31,23 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ExpenseProvider>
-          <div className="flex min-h-screen">
-            <aside className="hidden w-64 border-r bg-background md:block">
-              <Sidebar />
-            </aside>
-            <div className="flex flex-1 flex-col">
-              <Header />
-              <main className="flex-1">
-                <div className="container mx-auto p-6">
-                  {children}
-                </div>
-              </main>
+        <SettingsProvider>
+          <ExpenseProvider>
+            <div className="flex min-h-screen">
+              <aside className="hidden w-64 md:block">
+                <Sidebar />
+              </aside>
+              <div className="flex flex-1 flex-col">
+                <Header />
+                <main className="flex-1 overflow-auto">
+                  <div className="container mx-auto p-6">
+                    {children}
+                  </div>
+                </main>
+              </div>
             </div>
-          </div>
-        </ExpenseProvider>
+          </ExpenseProvider>
+        </SettingsProvider>
       </body>
     </html>
   );

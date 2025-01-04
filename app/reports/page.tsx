@@ -1,12 +1,14 @@
 'use client'
 
 import { PageHeader } from "@/components/page-header"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CategorySpendingChart } from "@/components/reports/category-spending"
 import { MonthlyTrendChart } from "@/components/reports/monthly-trend"
 import { DailySpendingChart } from "@/components/reports/daily-spending"
 import { SpendingHeatmap } from "@/components/reports/spending-heatmap"
+import { SpendingPatternAnalysis } from "@/components/reports/spending-patterns"
+import { ExpenseForecast } from "@/components/reports/expense-forecast"
 
 export default function ReportsPage() {
     return (
@@ -19,8 +21,8 @@ export default function ReportsPage() {
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="trends">Trends</TabsTrigger>
-                    <TabsTrigger value="categories">Categories</TabsTrigger>
-                    <TabsTrigger value="daily">Daily</TabsTrigger>
+                    <TabsTrigger value="analysis">Analysis</TabsTrigger>
+                    <TabsTrigger value="forecast">Forecast</TabsTrigger>
                 </TabsList>
                 <TabsContent value="overview" className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
@@ -56,31 +58,30 @@ export default function ReportsPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="categories" className="space-y-4">
+                <TabsContent value="analysis" className="space-y-6">
+                    <SpendingPatternAnalysis />
                     <Card>
                         <CardHeader>
                             <CardTitle>Category Analysis</CardTitle>
+                            <CardDescription>
+                                Detailed breakdown of spending by category
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <CategorySpendingChart showDetails />
                         </CardContent>
                     </Card>
                 </TabsContent>
-                <TabsContent value="daily" className="space-y-4">
+                <TabsContent value="forecast" className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Daily Spending Patterns</CardTitle>
+                            <CardTitle>Expense Forecast</CardTitle>
+                            <CardDescription>
+                                Predicted spending based on historical patterns
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <DailySpendingChart />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Spending Heatmap</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <SpendingHeatmap />
+                            <ExpenseForecast />
                         </CardContent>
                     </Card>
                 </TabsContent>
