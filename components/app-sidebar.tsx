@@ -43,7 +43,7 @@ const data = {
     {
       title: "Expenses",
       url: "/expenses",
-      icon: Wallet,
+      icon: DollarSign,
       items: [
         {
           title: "All Expenses",
@@ -53,9 +53,20 @@ const data = {
           title: "Add Expense",
           url: "/expenses/add",
         },
+      ],
+    },
+    {
+      title: "Categories",
+      url: "/categories",
+      icon: Frame,
+      items: [
         {
-          title: "Categories",
+          title: "All Categories",
           url: "/categories",
+        },
+        {
+          title: "Add Category",
+          url: "/categories/add",
         },
       ],
     },
@@ -65,12 +76,16 @@ const data = {
       icon: PieChart,
       items: [
         {
-          title: "Monthly Report",
-          url: "/reports/monthly",
+          title: "Overview",
+          url: "/reports",
         },
         {
-          title: "Annual Report",
-          url: "/reports/annual",
+          title: "Analysis",
+          url: "/reports/analysis",
+        },
+        {
+          title: "Forecast",
+          url: "/reports/forecast",
         },
       ],
     },
