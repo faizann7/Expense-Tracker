@@ -1,54 +1,54 @@
-import { ExpenseProvider } from "@/contexts/ExpenseContext";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import { SettingsProvider } from "@/contexts/SettingsContext";
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { AppSidebar } from "@/components/app-sidebar"
+import { ExpenseProvider } from "@/contexts/ExpenseContext"
+import { Toaster } from "@/components/ui/toaster"
+import { SettingsProvider } from "@/contexts/SettingsContext"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
+import { Breadcrumbs } from "@/components/Breadcrumbs"
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Expensee - Expense Tracker",
+  title: "Expense Tracker",
   description: "Track and manage your expenses",
-};
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en">
+      <body className={inter.className}>
         <SettingsProvider>
           <ExpenseProvider>
-            <div className="flex min-h-screen">
-              <aside className="hidden w-64 md:block">
-                <Sidebar />
-              </aside>
-              <div className="flex flex-1 flex-col">
-                <Header />
-                <main className="flex-1 overflow-auto">
-                  <div className="container mx-auto p-6">
-                    {children}
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <header className="flex h-16 shrink-0 items-center gap-2 border-b">
+                  <div className="flex items-center gap-2 px-4">
+                    <SidebarTrigger className="-ml-1" />
+                    <Separator orientation="vertical" className="mr-2 h-4" />
+                    <Breadcrumbs />
                   </div>
-                </main>
-              </div>
-            </div>
+                </header>
+                <div className="flex flex-1 flex-col gap-4 p-4">
+                  {children}
+                </div>
+              </SidebarInset>
+            </SidebarProvider>
+            <Toaster />
           </ExpenseProvider>
         </SettingsProvider>
       </body>
     </html>
-  );
+  )
 }

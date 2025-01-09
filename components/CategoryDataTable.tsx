@@ -33,11 +33,29 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 import { format } from "date-fns"
+import { Badge } from "@/components/ui/badge"
+import { generatePastelColor, getContrastColor } from "@/utils/colors"
 
 export const columns: ColumnDef<Category>[] = [
     {
         accessorKey: "name",
         header: "Name",
+        cell: ({ row }) => {
+            const category = row.original
+            return (
+                <div className="flex items-center gap-2">
+                    <Badge
+                        className="shadow-none"
+                        style={{
+                            backgroundColor: category.color,
+                            color: getContrastColor(category.color),
+                        }}
+                    >
+                        {category.name}
+                    </Badge>
+                </div>
+            )
+        },
     },
     {
         accessorKey: "description",

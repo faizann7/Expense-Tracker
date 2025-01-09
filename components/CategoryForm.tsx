@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useExpenses } from "@/contexts/ExpenseContext"
 import { useToast } from "@/components/ui/use-toast"
+import { generatePastelColor } from "@/utils/colors"
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -26,15 +27,21 @@ const formSchema = z.object({
 
 interface CategoryFormProps {
     onSuccess?: () => void
+    initialData?: Category
+    mode?: "add" | "edit"
 }
 
-export function CategoryForm({ onSuccess }: CategoryFormProps) {
-    const { addCategory } = useExpenses()
+export function CategoryForm({ onSuccess, initialData, mode = "add" }: CategoryFormProps) {
+    const { addCategory, updateCategory } = useExpenses()
     const { toast } = useToast()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
+        defaultValues: initialData ? {
+            name: initialData.name,
+            description: initialData.description || "",
+            color: initialData.color,
+        } : {
             name: "",
             description: "",
             color: "#000000",
@@ -45,14 +52,25 @@ export function CategoryForm({ onSuccess }: CategoryFormProps) {
         // Generate a pastel version of the selected color
         const pastelColor = generatePastelColor(values.color)
 
-        addCategory({
-            ...values,
-            color: pastelColor
-        })
-        toast({
-            title: "Category added",
-            description: "Your new category has been created successfully.",
-        })
+        if (mode === "edit" && initialData) {
+            updateCategory(initialData.id, {
+                ...values,
+                color: pastelColor
+            })
+            toast({
+                title: "Category updated",
+                description: "Your category has been updated successfully.",
+            })
+        } else {
+            addCategory({
+                ...values,
+                color: pastelColor
+            })
+            toast({
+                title: "Category added",
+                description: "Your new category has been created successfully.",
+            })
+        }
         form.reset()
         onSuccess?.()
     }
@@ -120,7 +138,9 @@ export function CategoryForm({ onSuccess }: CategoryFormProps) {
                     )}
                 />
 
-                <Button type="submit">Add Category</Button>
+                <Button type="submit">
+                    {mode === "edit" ? "Update" : "Add"} Category
+                </Button>
             </form>
         </Form>
     )

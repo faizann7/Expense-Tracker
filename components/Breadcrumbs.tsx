@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -15,36 +14,26 @@ import {
 const routeNameMap: { [key: string]: string } = {
     'dashboard': 'Dashboard',
     'expenses': 'Expenses',
-    'trends': 'Trends',
-    'add': 'Add Expense',
-    'edit': 'Edit Expense'
+    'categories': 'Categories',
+    'reports': 'Reports',
+    'settings': 'Settings',
+    'add': 'Add',
+    'edit': 'Edit',
+    'analytics': 'Analytics',
+    'monthly': 'Monthly',
+    'annual': 'Annual',
+    'general': 'General',
+    'notifications': 'Notifications',
+    'security': 'Security'
 }
 
 export function Breadcrumbs() {
     const pathname = usePathname()
     const segments = pathname.split('/').filter(Boolean)
 
-    if (pathname === '/dashboard') {
-        return (
-            <Breadcrumb>
-                <BreadcrumbList>
-                    <BreadcrumbItem>
-                        <BreadcrumbPage>Dashboard</BreadcrumbPage>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
-        )
-    }
-
     return (
         <Breadcrumb>
             <BreadcrumbList>
-                <BreadcrumbItem>
-                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator>
-                    <ChevronRight className="h-4 w-4" />
-                </BreadcrumbSeparator>
                 {segments.map((segment, index) => {
                     const path = `/${segments.slice(0, index + 1).join('/')}`
                     const isLast = index === segments.length - 1
@@ -54,12 +43,10 @@ export function Breadcrumbs() {
                         <BreadcrumbItem key={path}>
                             {!isLast ? (
                                 <>
-                                    <BreadcrumbLink href={path}>
-                                        {name}
+                                    <BreadcrumbLink asChild>
+                                        <Link href={path}>{name}</Link>
                                     </BreadcrumbLink>
-                                    <BreadcrumbSeparator>
-                                        <ChevronRight className="h-4 w-4" />
-                                    </BreadcrumbSeparator>
+                                    <BreadcrumbSeparator />
                                 </>
                             ) : (
                                 <BreadcrumbPage>{name}</BreadcrumbPage>

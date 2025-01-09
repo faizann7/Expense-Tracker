@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { BookOpen, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal, DollarSign, BarChart, PlusCircle } from 'lucide-react'
+import { BookOpen, Bot, Command, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal, DollarSign, BarChart, PlusCircle, Wallet, GalleryVerticalEnd } from 'lucide-react'
 
 import { NavMain } from "./nav-main"
 import { NavProjects } from "./nav-projects"
@@ -43,7 +43,7 @@ const data = {
     {
       title: "Expenses",
       url: "/expenses",
-      icon: DollarSign,
+      icon: Wallet,
       items: [
         {
           title: "All Expenses",
@@ -55,7 +55,7 @@ const data = {
         },
         {
           title: "Categories",
-          url: "/expenses/categories",
+          url: "/categories",
         },
       ],
     },
@@ -134,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <a href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <DollarSign className="size-4" />
+                  <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Expense Tracker</span>

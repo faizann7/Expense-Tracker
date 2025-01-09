@@ -12,10 +12,10 @@ import { ExpenseForecast } from "@/components/reports/expense-forecast"
 
 export default function ReportsPage() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             <PageHeader
                 title="Reports"
-                subtitle="Analyze your spending patterns"
+                subtitle="View your expense reports and analytics"
             />
             <Tabs defaultValue="overview" className="space-y-4">
                 <TabsList>

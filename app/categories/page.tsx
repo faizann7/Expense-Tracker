@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header"
 
 export default function CategoriesPage() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             <PageHeader
                 title="Categories"
                 subtitle="Manage your expense categories"

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/page-header"
 
 export default function ExpensesPage() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             <PageHeader
                 title="Expenses"
                 subtitle="Manage and track your expenses"
