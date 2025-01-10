@@ -1,8 +1,8 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import { DateRange } from "react-day-picker"
-import { isWithinInterval, parseISO, addMonths, isSameDay, startOfDay } from "date-fns"
+import { isWithinInterval, parseISO } from "date-fns"
 
 export type Expense = {
   id: string
@@ -19,18 +19,6 @@ export type Category = {
   color: string
   createdAt: string
   expenseCount: number
-}
-
-export type RecurringExpense = {
-  id: string
-  name: string
-  amount: number
-  category: string
-  frequency: 'monthly' | 'quarterly' | 'yearly'
-  startDate: string
-  nextDueDate: string
-  notes?: string
-  active: boolean
 }
 
 type FilterCriteria = {
@@ -50,11 +38,6 @@ interface ExpenseContextType {
   addCategory: (category: Omit<Category, "id" | "createdAt" | "expenseCount">) => void
   deleteCategory: (id: string) => void
   updateCategory: (id: string, category: Partial<Category>) => void
-  recurringExpenses: RecurringExpense[]
-  addRecurringExpense: (expense: Omit<RecurringExpense, 'id' | 'nextDueDate'>) => void
-  updateRecurringExpense: (id: string, expense: Partial<RecurringExpense>) => void
-  deleteRecurringExpense: (id: string) => void
-  processRecurringExpenses: () => void
 }
 
 export const ExpenseContext = createContext<ExpenseContextType>({} as ExpenseContextType)
@@ -120,13 +103,6 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [filters, setFilterCriteria] = useState<FilterCriteria>({})
   const [categories, setCategories] = useState<Category[]>([])
-  const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('recurringExpenses')
-      return saved ? JSON.parse(saved) : []
-    }
-    return []
-  })
 
   // Load expenses from localStorage on initial render
   useEffect(() => {
@@ -268,77 +244,6 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     ))
   }
 
-  // Save recurring expenses to localStorage
-  useEffect(() => {
-    localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses))
-  }, [recurringExpenses])
-
-  const addRecurringExpense = useCallback((expense: Omit<RecurringExpense, 'id' | 'nextDueDate'>) => {
-    const newExpense: RecurringExpense = {
-      ...expense,
-      id: crypto.randomUUID(),
-      nextDueDate: expense.startDate
-    }
-    setRecurringExpenses(prev => [...prev, newExpense])
-  }, [])
-
-  const updateRecurringExpense = useCallback((id: string, updates: Partial<RecurringExpense>) => {
-    setRecurringExpenses(prev =>
-      prev.map(expense =>
-        expense.id === id ? { ...expense, ...updates } : expense
-      )
-    )
-  }, [])
-
-  const deleteRecurringExpense = useCallback((id: string) => {
-    setRecurringExpenses(prev => prev.filter(expense => expense.id !== id))
-  }, [])
-
-  const processRecurringExpenses = useCallback(() => {
-    const today = startOfDay(new Date())
-
-    recurringExpenses.forEach(recurring => {
-      if (!recurring.active) return
-
-      const dueDate = new Date(recurring.nextDueDate)
-      if (isSameDay(today, dueDate)) {
-        // Create the expense
-        const newExpense = {
-          date: recurring.nextDueDate,
-          amount: recurring.amount,
-          category: recurring.category,
-          notes: `${recurring.name} (Recurring)`,
-        }
-        addExpense(newExpense)
-
-        // Update next due date
-        let nextDate = dueDate
-        switch (recurring.frequency) {
-          case 'monthly':
-            nextDate = addMonths(dueDate, 1)
-            break
-          case 'quarterly':
-            nextDate = addMonths(dueDate, 3)
-            break
-          case 'yearly':
-            nextDate = addMonths(dueDate, 12)
-            break
-        }
-
-        updateRecurringExpense(recurring.id, {
-          nextDueDate: nextDate.toISOString()
-        })
-      }
-    })
-  }, [recurringExpenses, addExpense])
-
-  // Check for recurring expenses daily
-  useEffect(() => {
-    processRecurringExpenses()
-    const interval = setInterval(processRecurringExpenses, 24 * 60 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [processRecurringExpenses])
-
   const value = {
     expenses,
     filteredExpenses,
@@ -350,12 +255,7 @@ export function ExpenseProvider({ children }: { children: React.ReactNode }) {
     clearFilters,
     addCategory,
     deleteCategory,
-    updateCategory,
-    recurringExpenses,
-    addRecurringExpense,
-    updateRecurringExpense,
-    deleteRecurringExpense,
-    processRecurringExpenses
+    updateCategory
   }
 
   return (
