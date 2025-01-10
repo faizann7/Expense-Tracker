@@ -1,10 +1,11 @@
-"use client"
+'use client'
 
 import {
     ColumnDef,
     flexRender,
     getCoreRowModel,
     useReactTable,
+    getPaginationRowModel,
     getSortedRowModel,
     SortingState,
 } from "@tanstack/react-table"
@@ -19,8 +20,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useTransactions } from "@/contexts/TransactionContext"
+import { formatCurrency } from "@/lib/utils"
 import { Edit, Trash } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -32,55 +33,101 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { EditCategoryDialog } from "./EditCategoryDialog"
+import { format } from "date-fns"
+import { Badge } from "@/components/ui/badge"
 
-interface Category {
-    value: string
-    label: string
-    type: 'income' | 'expense' | 'both'
+interface Transaction {
+    id: string
+    type: 'income' | 'expense'
+    amount: number
+    description: string
+    category: string
+    date: Date
 }
 
-export function CategoryDataTable() {
-    const { categories, deleteCategory } = useTransactions()
-    const [sorting, setSorting] = useState<SortingState>([])
-    const [categoryToEdit, setCategoryToEdit] = useState<Category | null>(null)
+interface TransactionDataTableProps {
+    onEdit: (transaction: Transaction) => void
+}
 
-    const columns: ColumnDef<Category>[] = [
+export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
+    const { transactions, categories, isLoading, deleteTransaction } = useTransactions()
+    const [sorting, setSorting] = useState<SortingState>([])
+
+    const columns: ColumnDef<Transaction>[] = [
         {
-            accessorKey: "label",
-            header: "Name",
-            cell: ({ row }) => row.getValue("label")
+            accessorKey: "date",
+            header: "Date",
+            cell: ({ row }) => {
+                const date = new Date(row.getValue("date"))
+                return (
+                    <div className="font-medium">
+                        {format(date, "MMM dd, yyyy")}
+                    </div>
+                )
+            }
         },
         {
             accessorKey: "type",
             header: "Type",
             cell: ({ row }) => {
-                const type = row.getValue("type") as 'income' | 'expense' | 'both'
+                const type = row.getValue("type") as 'income' | 'expense'
                 return (
                     <Badge
-                        variant={
-                            type === 'income'
-                                ? 'default'
-                                : type === 'expense'
-                                    ? 'destructive'
-                                    : 'secondary'
-                        }
+                        variant={type === 'income' ? 'default' : 'destructive'}
+                        className="capitalize"
                     >
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                        {type}
                     </Badge>
+                )
+            }
+        },
+        {
+            accessorKey: "description",
+            header: "Description",
+            cell: ({ row }) => {
+                return (
+                    <div className="font-medium">
+                        {row.getValue("description")}
+                    </div>
+                )
+            }
+        },
+        {
+            accessorKey: "category",
+            header: "Category",
+            cell: ({ row }) => {
+                const categoryValue = row.getValue("category") as string
+                const category = categories.find(cat => cat.value === categoryValue)
+                return (
+                    <div className="font-medium">
+                        {category?.label || categoryValue}
+                    </div>
+                )
+            }
+        },
+        {
+            accessorKey: "amount",
+            header: () => <div className="text-right">Amount</div>,
+            cell: ({ row }) => {
+                const amount = row.getValue("amount") as number
+                const type = row.getValue("type") as 'income' | 'expense'
+                return (
+                    <div className={`text-right font-medium ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(amount)}
+                    </div>
                 )
             }
         },
         {
             id: "actions",
             cell: ({ row }) => {
-                const category = row.original
+                const transaction = row.original
                 return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setCategoryToEdit(category)}
+                            onClick={() => onEdit(transaction)}
                         >
                             <Edit className="h-4 w-4" />
                         </Button>
@@ -92,15 +139,15 @@ export function CategoryDataTable() {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Category</AlertDialogTitle>
+                                    <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to delete this category? This action cannot be undone.
+                                        Are you sure you want to delete this transaction? This action cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
-                                        onClick={() => deleteCategory(category.value)}
+                                        onClick={() => deleteTransaction(transaction.id)}
                                     >
                                         Delete
                                     </AlertDialogAction>
@@ -114,9 +161,10 @@ export function CategoryDataTable() {
     ]
 
     const table = useReactTable({
-        data: categories,
+        data: transactions,
         columns,
         getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onSortingChange: setSorting,
         state: {
@@ -124,8 +172,12 @@ export function CategoryDataTable() {
         },
     })
 
+    if (isLoading) {
+        return <div>Loading...</div>
+    }
+
     return (
-        <>
+        <div>
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -150,6 +202,7 @@ export function CategoryDataTable() {
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
+                                    className="h-16"
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -167,19 +220,31 @@ export function CategoryDataTable() {
                                     colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
-                                    No categories found.
+                                    No transactions found.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
-            {categoryToEdit && (
-                <EditCategoryDialog
-                    category={categoryToEdit}
-                    onClose={() => setCategoryToEdit(null)}
-                />
-            )}
-        </>
+            <div className="flex items-center justify-end space-x-2 py-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                >
+                    Previous
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                >
+                    Next
+                </Button>
+            </div>
+        </div>
     )
-} 
+}

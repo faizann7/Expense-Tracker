@@ -13,17 +13,26 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useExpenses } from "@/contexts/ExpenseContext"
-import { useToast } from "@/components/ui/use-toast"
-import { generatePastelColor } from "@/utils/colors"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { useTransactions } from "@/contexts/TransactionContext"
 
 const formSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    description: z.string().optional(),
-    color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, {
-        message: "Please enter a valid hex color code",
-    }),
+    label: z.string().min(1, "Name is required"),
+    value: z.string().min(1, "Value is required"),
+    type: z.enum(['income', 'expense', 'both'])
 })
+
+interface Category {
+    value: string
+    label: string
+    type: 'income' | 'expense' | 'both'
+}
 
 interface CategoryFormProps {
     onSuccess?: () => void
@@ -32,44 +41,22 @@ interface CategoryFormProps {
 }
 
 export function CategoryForm({ onSuccess, initialData, mode = "add" }: CategoryFormProps) {
-    const { addCategory, updateCategory } = useExpenses()
-    const { toast } = useToast()
+    const { addCategory, updateCategory } = useTransactions()
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: initialData ? {
-            name: initialData.name,
-            description: initialData.description || "",
-            color: initialData.color,
-        } : {
-            name: "",
-            description: "",
-            color: "#000000",
-        },
+        defaultValues: initialData || {
+            label: "",
+            value: "",
+            type: "expense"
+        }
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        // Generate a pastel version of the selected color
-        const pastelColor = generatePastelColor(values.color)
-
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         if (mode === "edit" && initialData) {
-            updateCategory(initialData.id, {
-                ...values,
-                color: pastelColor
-            })
-            toast({
-                title: "Category updated",
-                description: "Your category has been updated successfully.",
-            })
+            updateCategory(initialData.value, values)
         } else {
-            addCategory({
-                ...values,
-                color: pastelColor
-            })
-            toast({
-                title: "Category added",
-                description: "Your new category has been created successfully.",
-            })
+            addCategory(values)
         }
         form.reset()
         onSuccess?.()
@@ -80,7 +67,7 @@ export function CategoryForm({ onSuccess, initialData, mode = "add" }: CategoryF
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
-                    name="name"
+                    name="label"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Name</FormLabel>
@@ -94,12 +81,16 @@ export function CategoryForm({ onSuccess, initialData, mode = "add" }: CategoryF
 
                 <FormField
                     control={form.control}
-                    name="description"
+                    name="value"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Description (Optional)</FormLabel>
+                            <FormLabel>Value</FormLabel>
                             <FormControl>
-                                <Input placeholder="Category description" {...field} />
+                                <Input
+                                    placeholder="category-name"
+                                    {...field}
+                                    disabled={mode === "edit"}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -108,37 +99,28 @@ export function CategoryForm({ onSuccess, initialData, mode = "add" }: CategoryF
 
                 <FormField
                     control={form.control}
-                    name="color"
+                    name="type"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Color</FormLabel>
-                            <FormControl>
-                                <div className="flex gap-2">
-                                    <Input
-                                        type="color"
-                                        {...field}
-                                        className="w-12 h-10 p-1"
-                                    />
-                                    <Input
-                                        {...field}
-                                        placeholder="#000000"
-                                        onChange={(e) => {
-                                            const value = e.target.value
-                                            if (value.startsWith('#')) {
-                                                field.onChange(value)
-                                            } else {
-                                                field.onChange(`#${value}`)
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </FormControl>
+                            <FormLabel>Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select category type" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="income">Income</SelectItem>
+                                    <SelectItem value="expense">Expense</SelectItem>
+                                    <SelectItem value="both">Both</SelectItem>
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
-                <Button type="submit">
+                <Button type="submit" className="w-full">
                     {mode === "edit" ? "Update" : "Add"} Category
                 </Button>
             </form>

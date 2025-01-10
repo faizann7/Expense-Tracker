@@ -41,9 +41,9 @@ const data = {
       ],
     },
     {
-      title: "Expenses",
-      url: "/expenses",
-      icon: DollarSign,
+      title: "Transaction",
+      url: "/transactions",
+      icon: Wallet,
       items: [
         {
           title: "All Expenses",

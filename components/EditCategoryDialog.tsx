@@ -7,25 +7,29 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { CategoryForm } from "./CategoryForm"
-import { Category } from "@/contexts/ExpenseContext"
+
+interface Category {
+    value: string
+    label: string
+    type: 'income' | 'expense' | 'both'
+}
 
 interface EditCategoryDialogProps {
     category: Category
-    open: boolean
     onClose: () => void
 }
 
-export function EditCategoryDialog({ category, open, onClose }: EditCategoryDialogProps) {
+export function EditCategoryDialog({ category, onClose }: EditCategoryDialogProps) {
     return (
-        <Dialog open={open} onOpenChange={onClose}>
+        <Dialog open={true} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Edit Category</DialogTitle>
                 </DialogHeader>
                 <CategoryForm
-                    onSuccess={onClose}
-                    initialData={category}
                     mode="edit"
+                    initialData={category}
+                    onSuccess={onClose}
                 />
             </DialogContent>
         </Dialog>
