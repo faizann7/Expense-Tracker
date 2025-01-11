@@ -31,6 +31,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
 
 interface Transaction {
     id: string
@@ -52,6 +61,8 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
         { id: 'date', desc: true }
     ])
     const [expandedBreakdown, setExpandedBreakdown] = useState<string | null>(null)
+    const [currentPage, setCurrentPage] = useState(1)
+    const pageSize = 10
 
     const columns: ColumnDef<Transaction>[] = [
         {
@@ -177,117 +188,218 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
         onSortingChange: setSorting,
         state: {
             sorting,
+            pagination: {
+                pageIndex: currentPage - 1,
+                pageSize,
+            },
         },
     })
 
+    const totalPages = Math.ceil(filteredTransactions.length / pageSize)
+
+    // Function to generate page numbers array
+    const getPageNumbers = () => {
+        const pages = []
+        const maxVisiblePages = 5
+        const halfVisible = Math.floor(maxVisiblePages / 2)
+
+        let startPage = Math.max(currentPage - halfVisible, 1)
+        let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages)
+
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(endPage - maxVisiblePages + 1, 1)
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i)
+        }
+
+        return pages
+    }
+
     return (
-        <div className="rounded-md border overflow-hidden">
-            <Table>
-                <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <TableHead key={header.id}>
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
-                            <>
-                                <TableRow
-                                    key={row.id}
-                                    className={cn(
-                                        "group hover:bg-gray-50/50",
-                                        row.original.type === 'income' ? 'hover:border-l-green-200' : 'hover:border-l-gray-200'
-                                    )}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
+        <div className="space-y-4">
+            <div className="rounded-md border">
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead key={header.id}>
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                header.column.columnDef.header,
+                                                header.getContext()
                                             )}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                                {/* Breakdown Row */}
-                                {expandedBreakdown === row.original.id && row.original.breakdowns?.length > 0 && (
-                                    <TableRow className="hover:bg-transparent">
-                                        <TableCell
-                                            colSpan={columns.length}
-                                            className="p-0 border-none"
-                                        >
-                                            <div className="mx-4 my-2">
-                                                <div className="relative p-4">
-                                                    {/* Connector line */}
-                                                    <div className="absolute -top-3 left-8 h-3 w-px bg-gray-200" />
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                                <>
+                                    <TableRow
+                                        key={row.id}
+                                        className={cn(
+                                            "group hover:bg-gray-50/50",
+                                            row.original.type === 'income' ? 'hover:border-l-green-200' : 'hover:border-l-gray-200'
+                                        )}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                    {/* Breakdown Row */}
+                                    {expandedBreakdown === row.original.id && row.original.breakdowns?.length > 0 && (
+                                        <TableRow className="hover:bg-transparent">
+                                            <TableCell
+                                                colSpan={columns.length}
+                                                className="p-0 border-none"
+                                            >
+                                                <div className="mx-4 my-2">
+                                                    <div className="relative p-4">
+                                                        {/* Connector line */}
+                                                        <div className="absolute -top-3 left-8 h-3 w-px bg-gray-200" />
 
-                                                    {/* Header */}
-                                                    <div className="mb-3 flex items-center justify-between text-sm text-gray-500">
-                                                        <span>Breakdown Details</span>
-                                                        <span>Total: {formatCurrency(
-                                                            row.original.breakdowns.reduce((sum, b) => sum + b.amount, 0)
-                                                        )}</span>
-                                                    </div>
+                                                        {/* Header */}
+                                                        <div className="mb-3 flex items-center justify-between text-sm text-gray-500">
+                                                            <span>Breakdown Details</span>
+                                                            <span>Total: {formatCurrency(
+                                                                row.original.breakdowns.reduce((sum, b) => sum + b.amount, 0)
+                                                            )}</span>
+                                                        </div>
 
-                                                    {/* Breakdown Items */}
-                                                    <div className="space-y-2">
-                                                        {row.original.breakdowns.map((breakdown, index) => (
-                                                            <div
-                                                                key={index}
-                                                                className="flex items-center gap-3 rounded-md bg-white p-3 shadow-sm"
-                                                            >
-                                                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-50 text-xs font-medium text-gray-600 ring-1 ring-gray-200/50">
-                                                                    {index + 1}
-                                                                </div>
-                                                                <div className="flex flex-1 items-center justify-between">
-                                                                    <div className="flex flex-col">
-                                                                        <span className="font-medium text-gray-700">
-                                                                            {breakdown.description}
-                                                                        </span>
-                                                                        <span className="text-xs text-gray-500">
-                                                                            {((breakdown.amount / row.original.amount) * 100).toFixed(0)}% of total
+                                                        {/* Breakdown Items */}
+                                                        <div className="space-y-2">
+                                                            {row.original.breakdowns.map((breakdown, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className="flex items-center gap-3 rounded-md bg-white p-3 shadow-sm"
+                                                                >
+                                                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-50 text-xs font-medium text-gray-600 ring-1 ring-gray-200/50">
+                                                                        {index + 1}
+                                                                    </div>
+                                                                    <div className="flex flex-1 items-center justify-between">
+                                                                        <div className="flex flex-col">
+                                                                            <span className="font-medium text-gray-700">
+                                                                                {breakdown.description}
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500">
+                                                                                {((breakdown.amount / row.original.amount) * 100).toFixed(0)}% of total
+                                                                            </span>
+                                                                        </div>
+                                                                        <span className={cn(
+                                                                            "font-medium",
+                                                                            row.original.type === 'income' ? 'text-green-600' : 'text-gray-900'
+                                                                        )}>
+                                                                            {row.original.type === 'income' ? '+' : '-'}
+                                                                            {formatCurrency(breakdown.amount)}
                                                                         </span>
                                                                     </div>
-                                                                    <span className={cn(
-                                                                        "font-medium",
-                                                                        row.original.type === 'income' ? 'text-green-600' : 'text-gray-900'
-                                                                    )}>
-                                                                        {row.original.type === 'income' ? '+' : '-'}
-                                                                        {formatCurrency(breakdown.amount)}
-                                                                    </span>
                                                                 </div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </>
-                        ))
-                    ) : (
-                        <TableRow>
-                            <TableCell
-                                colSpan={columns.length}
-                                className="h-24 text-center"
-                            >
-                                No transactions found.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-24 text-center"
+                                >
+                                    No transactions found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Add pagination controls */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2">
+                    <div className="text-sm text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <Pagination>
+                        <PaginationContent>
+                            <PaginationItem>
+                                <PaginationPrevious
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    className={cn(
+                                        "cursor-pointer",
+                                        currentPage === 1 && "pointer-events-none opacity-50"
+                                    )}
+                                />
+                            </PaginationItem>
+
+                            {currentPage > 2 && (
+                                <>
+                                    <PaginationItem>
+                                        <PaginationLink onClick={() => setCurrentPage(1)}>
+                                            1
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                    {currentPage > 3 && (
+                                        <PaginationItem>
+                                            <PaginationEllipsis />
+                                        </PaginationItem>
+                                    )}
+                                </>
+                            )}
+
+                            {getPageNumbers().map((pageNumber) => (
+                                <PaginationItem key={pageNumber}>
+                                    <PaginationLink
+                                        onClick={() => setCurrentPage(pageNumber)}
+                                        isActive={currentPage === pageNumber}
+                                    >
+                                        {pageNumber}
+                                    </PaginationLink>
+                                </PaginationItem>
+                            ))}
+
+                            {currentPage < totalPages - 1 && (
+                                <>
+                                    {currentPage < totalPages - 2 && (
+                                        <PaginationItem>
+                                            <PaginationEllipsis />
+                                        </PaginationItem>
+                                    )}
+                                    <PaginationItem>
+                                        <PaginationLink onClick={() => setCurrentPage(totalPages)}>
+                                            {totalPages}
+                                        </PaginationLink>
+                                    </PaginationItem>
+                                </>
+                            )}
+
+                            <PaginationItem>
+                                <PaginationNext
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    className={cn(
+                                        "cursor-pointer",
+                                        currentPage === totalPages && "pointer-events-none opacity-50"
+                                    )}
+                                />
+                            </PaginationItem>
+                        </PaginationContent>
+                    </Pagination>
+                </div>
+            )}
         </div>
     )
 }
