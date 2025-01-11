@@ -1,45 +1,37 @@
 'use client'
 
+import { useState } from "react"
 import { AddTransactionDialog } from "@/components/AddTransactionDialog"
 import { TransactionDataTable } from "@/components/TransactionDataTable"
-import { TransactionGrid } from "@/components/TransactionGrid"
+import { TransactionTimeline } from "@/components/TransactionTimeline"
 import { ViewSwitcher } from "@/components/ViewSwitcher"
-import { Filters } from "@/components/Filters"
-import { PageHeader } from "@/components/page-header"
 import { TransactionProvider } from "@/contexts/TransactionContext"
-import { useState } from "react"
-import { EditTransactionDialog } from "@/components/EditTransactionDialog"
-
-type ViewType = 'table' | 'grid'
+import { TransactionFilters } from "@/components/TransactionFilters"
+import { PageHeader } from "@/components/page-header"
 
 export default function TransactionsPage() {
-    const [view, setView] = useState<ViewType>('table')
+    const [view, setView] = useState<'table' | 'grid' | 'timeline'>('table')
     const [transactionToEdit, setTransactionToEdit] = useState<any>(null)
+
+    const onEdit = (transaction: any) => {
+        setTransactionToEdit(transaction)
+    }
 
     return (
         <TransactionProvider>
             <div className="space-y-6 w-full">
                 <PageHeader
                     title="Transactions"
-                    subtitle="Manage and track your income and expenses"
+                    subtitle="Manage and track your transactions"
                 >
-                    <div className="flex items-center gap-2">
-                        <ViewSwitcher view={view} onViewChange={setView} />
-                        <AddTransactionDialog />
-                    </div>
+                    <AddTransactionDialog />
                 </PageHeader>
-                <Filters />
-                {view === 'table' ? (
-                    <TransactionDataTable onEdit={setTransactionToEdit} />
-                ) : (
-                    <TransactionGrid onEdit={setTransactionToEdit} />
-                )}
-                {transactionToEdit && (
-                    <EditTransactionDialog
-                        transaction={transactionToEdit}
-                        onClose={() => setTransactionToEdit(null)}
-                    />
-                )}
+                <div className="flex justify-between items-center gap-4">
+                    <TransactionFilters />
+                    <ViewSwitcher view={view} onViewChange={setView} />
+                </div>
+                {view === 'table' && <TransactionDataTable onEdit={onEdit} />}
+                {view === 'timeline' && <TransactionTimeline onEdit={onEdit} />}
             </div>
         </TransactionProvider>
     )

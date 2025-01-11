@@ -3,6 +3,13 @@
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { categories as defaultCategories } from '@/config/categories'
+import { DateRange } from "react-day-picker"
+
+interface TransactionBreakdown {
+    id: string
+    description: string
+    amount: number
+}
 
 interface Transaction {
     id: string
@@ -13,12 +20,19 @@ interface Transaction {
     date: Date
     createdAt: Date
     updatedAt: Date
+    breakdowns?: TransactionBreakdown[]
 }
 
 interface Category {
     value: string
     label: string
     type: 'income' | 'expense' | 'both'
+}
+
+type FilterCriteria = {
+    dateRange?: DateRange
+    category?: string
+    type?: 'income' | 'expense'
 }
 
 interface TransactionContextType {
@@ -31,6 +45,9 @@ interface TransactionContextType {
     addCategory: (category: Category) => void
     updateCategory: (oldValue: string, category: Category) => void
     deleteCategory: (value: string) => void
+    setFilters: (filters: FilterCriteria) => void
+    clearFilters: () => void
+    filteredTransactions: Transaction[]
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined)
@@ -43,6 +60,7 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     const [categories, setCategories] = useState<Category[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const searchParams = useSearchParams()
+    const [filters, setFilterCriteria] = useState<FilterCriteria>({})
 
     // Load data from localStorage
     useEffect(() => {
@@ -70,10 +88,22 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     const type = searchParams.get('type')
 
     const filteredTransactions = transactions.filter(transaction => {
-        if (dateFrom && new Date(transaction.date) < new Date(dateFrom)) return false
-        if (dateTo && new Date(transaction.date) > new Date(dateTo)) return false
-        if (category && transaction.category !== category) return false
-        if (type && transaction.type !== type) return false
+        if (filters.dateRange?.from && filters.dateRange?.to) {
+            const transactionDate = new Date(transaction.date)
+            if (!(transactionDate >= filters.dateRange.from &&
+                transactionDate <= filters.dateRange.to)) {
+                return false
+            }
+        }
+
+        if (filters.category && transaction.category !== filters.category) {
+            return false
+        }
+
+        if (filters.type && transaction.type !== filters.type) {
+            return false
+        }
+
         return true
     })
 
@@ -157,6 +187,43 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions))
     }
 
+    const setFilters = (newFilters: FilterCriteria) => {
+        setFilterCriteria(newFilters)
+    }
+
+    const clearFilters = () => {
+        setFilterCriteria({})
+    }
+
+    // Add this sample data to your initial transactions
+    const sampleTransactions = [
+        {
+            id: "1",
+            type: "expense",
+            amount: 60,
+            description: "Uber rides",
+            category: "transport",
+            date: new Date(),
+            breakdowns: [
+                {
+                    id: "1-1",
+                    description: "Home to Store",
+                    amount: 25
+                },
+                {
+                    id: "1-2",
+                    description: "Store to Friend's House",
+                    amount: 15
+                },
+                {
+                    id: "1-3",
+                    description: "Friend's House to Home",
+                    amount: 20
+                }
+            ]
+        }
+    ]
+
     return (
         <TransactionContext.Provider
             value={{
@@ -168,7 +235,10 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
                 updateTransaction,
                 addCategory,
                 updateCategory,
-                deleteCategory
+                deleteCategory,
+                setFilters,
+                clearFilters,
+                filteredTransactions,
             }}
         >
             {children}

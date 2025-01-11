@@ -21,20 +21,16 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useTransactions } from "@/contexts/TransactionContext"
 import { formatCurrency } from "@/lib/utils"
-import { Edit, Trash } from "lucide-react"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+import { Edit, Trash, MoreHorizontal, ChevronDown } from "lucide-react"
 import { format } from "date-fns"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Transaction {
     id: string
@@ -43,6 +39,7 @@ interface Transaction {
     description: string
     category: string
     date: Date
+    breakdowns?: { description: string; amount: number }[];
 }
 
 interface TransactionDataTableProps {
@@ -50,8 +47,11 @@ interface TransactionDataTableProps {
 }
 
 export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
-    const { transactions, categories, isLoading, deleteTransaction } = useTransactions()
-    const [sorting, setSorting] = useState<SortingState>([])
+    const { filteredTransactions, categories, deleteTransaction } = useTransactions()
+    const [sorting, setSorting] = useState<SortingState>([
+        { id: 'date', desc: true }
+    ])
+    const [expandedBreakdown, setExpandedBreakdown] = useState<string | null>(null)
 
     const columns: ColumnDef<Transaction>[] = [
         {
@@ -60,11 +60,11 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
             cell: ({ row }) => {
                 const date = new Date(row.getValue("date"))
                 return (
-                    <div className="font-medium">
+                    <span className="text-gray-600">
                         {format(date, "MMM dd, yyyy")}
-                    </div>
+                    </span>
                 )
-            }
+            },
         },
         {
             accessorKey: "type",
@@ -72,96 +72,104 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
             cell: ({ row }) => {
                 const type = row.getValue("type") as 'income' | 'expense'
                 return (
-                    <Badge
-                        variant={type === 'income' ? 'default' : 'destructive'}
-                        className="capitalize"
-                    >
-                        {type}
+                    <Badge variant={type === 'income' ? 'green' : 'red'} className="text-xs font-medium">
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
                     </Badge>
                 )
-            }
-        },
-        {
-            accessorKey: "description",
-            header: "Description",
-            cell: ({ row }) => {
-                return (
-                    <div className="font-medium">
-                        {row.getValue("description")}
-                    </div>
-                )
-            }
+            },
         },
         {
             accessorKey: "category",
             header: "Category",
             cell: ({ row }) => {
-                const categoryValue = row.getValue("category") as string
-                const category = categories.find(cat => cat.value === categoryValue)
+                const category = categories.find(cat => cat.value === row.getValue("category"))
                 return (
-                    <div className="font-medium">
-                        {category?.label || categoryValue}
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">{category?.label || row.getValue("category")}</span>
+                        {row.original.breakdowns?.length > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                                {row.original.breakdowns.length} items
+                            </Badge>
+                        )}
                     </div>
                 )
-            }
+            },
+        },
+        {
+            accessorKey: "description",
+            header: "Description",
+            cell: ({ row }) => (
+                <span className="text-gray-600">{row.getValue("description")}</span>
+            ),
         },
         {
             accessorKey: "amount",
-            header: () => <div className="text-right">Amount</div>,
+            header: "Amount",
             cell: ({ row }) => {
                 const amount = row.getValue("amount") as number
                 const type = row.getValue("type") as 'income' | 'expense'
                 return (
-                    <div className={`text-right font-medium ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={cn(
+                        "font-medium",
+                        type === 'income' ? 'text-green-600' : 'text-black'
+                    )}>
+                        {type === 'income' ? '+' : '-'}
                         {formatCurrency(amount)}
-                    </div>
+                    </span>
                 )
-            }
+            },
         },
         {
             id: "actions",
-            cell: ({ row }) => {
-                const transaction = row.original
-                return (
-                    <div className="flex items-center justify-end gap-2">
+            cell: ({ row }) => (
+                <div className="flex justify-end items-center">
+                    {row.original.breakdowns?.length > 0 && (
                         <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEdit(transaction)}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setExpandedBreakdown(expandedBreakdown === row.original.id ? null : row.original.id)
+                            }}
+                            className="ml-2 flex items-center border-none shadow-none"
                         >
-                            <Edit className="h-4 w-4" />
+                            {expandedBreakdown === row.original.id ? 'Hide Breakdown' : 'View Breakdown'}
+                            <ChevronDown className={cn(
+                                "ml-1 h-4 w-4 transition-transform",
+                                expandedBreakdown === row.original.id && "rotate-180"
+                            )} />
                         </Button>
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Trash className="h-4 w-4" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Are you sure you want to delete this transaction? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={() => deleteTransaction(transaction.id)}
-                                    >
-                                        Delete
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
-                )
-            }
-        }
+                    )}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-gray-600 ml-2"
+                            >
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[160px]">
+                            <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => deleteTransaction(row.original.id)}
+                                className="text-red-600 hover:text-red-700"
+                            >
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            ),
+        },
     ]
 
     const table = useReactTable({
-        data: transactions,
+        data: filteredTransactions,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -172,37 +180,35 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
         },
     })
 
-    if (isLoading) {
-        return <div>Loading...</div>
-    }
-
     return (
-        <div>
-            <div className="rounded-md border">
-                <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows?.length ? (
-                            table.getRowModel().rows.map((row) => (
+        <div className="rounded-md border overflow-hidden">
+            <Table>
+                <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableHeader>
+                <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                            <>
                                 <TableRow
                                     key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                    className="h-16"
+                                    className={cn(
+                                        "group hover:bg-gray-50/50",
+                                        row.original.type === 'income' ? 'hover:border-l-green-200' : 'hover:border-l-gray-200'
+                                    )}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -213,38 +219,75 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
                                         </TableCell>
                                     ))}
                                 </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center"
-                                >
-                                    No transactions found.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    Previous
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                >
-                    Next
-                </Button>
-            </div>
+                                {/* Breakdown Row */}
+                                {expandedBreakdown === row.original.id && row.original.breakdowns?.length > 0 && (
+                                    <TableRow className="hover:bg-transparent">
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="p-0 border-none"
+                                        >
+                                            <div className="mx-4 my-2">
+                                                <div className="relative p-4">
+                                                    {/* Connector line */}
+                                                    <div className="absolute -top-3 left-8 h-3 w-px bg-gray-200" />
+
+                                                    {/* Header */}
+                                                    <div className="mb-3 flex items-center justify-between text-sm text-gray-500">
+                                                        <span>Breakdown Details</span>
+                                                        <span>Total: {formatCurrency(
+                                                            row.original.breakdowns.reduce((sum, b) => sum + b.amount, 0)
+                                                        )}</span>
+                                                    </div>
+
+                                                    {/* Breakdown Items */}
+                                                    <div className="space-y-2">
+                                                        {row.original.breakdowns.map((breakdown, index) => (
+                                                            <div
+                                                                key={index}
+                                                                className="flex items-center gap-3 rounded-md bg-white p-3 shadow-sm"
+                                                            >
+                                                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-50 text-xs font-medium text-gray-600 ring-1 ring-gray-200/50">
+                                                                    {index + 1}
+                                                                </div>
+                                                                <div className="flex flex-1 items-center justify-between">
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-medium text-gray-700">
+                                                                            {breakdown.description}
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-500">
+                                                                            {((breakdown.amount / row.original.amount) * 100).toFixed(0)}% of total
+                                                                        </span>
+                                                                    </div>
+                                                                    <span className={cn(
+                                                                        "font-medium",
+                                                                        row.original.type === 'income' ? 'text-green-600' : 'text-gray-900'
+                                                                    )}>
+                                                                        {row.original.type === 'income' ? '+' : '-'}
+                                                                        {formatCurrency(breakdown.amount)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell
+                                colSpan={columns.length}
+                                className="h-24 text-center"
+                            >
+                                No transactions found.
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
         </div>
     )
 }

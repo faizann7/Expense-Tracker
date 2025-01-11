@@ -39,17 +39,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
-interface TransactionGridProps {
+interface TransactionTimelineProps {
     onEdit: (transaction: any) => void
-}
-
-interface GroupedTransactions {
-    [key: string]: {
-        date: Date
-        transactions: any[]
-        totalIncome: number
-        totalExpense: number
-    }
 }
 
 // Add a mapping of category values to icons
@@ -64,8 +55,8 @@ const categoryIcons: Record<string, any> = {
     // ... add more mappings as needed
 }
 
-export function TransactionGrid({ onEdit }: TransactionGridProps) {
-    const { transactions, categories, deleteTransaction } = useTransactions()
+export function TransactionTimeline({ onEdit }: TransactionTimelineProps) {
+    const { filteredTransactions, categories, deleteTransaction } = useTransactions()
     const [expandedTransactions, setExpandedTransactions] = useState<Set<string>>(new Set())
 
     const toggleTransaction = (id: string) => {
@@ -79,7 +70,7 @@ export function TransactionGrid({ onEdit }: TransactionGridProps) {
     }
 
     // Group transactions by date
-    const groupedTransactions = transactions.reduce((acc: GroupedTransactions, transaction) => {
+    const groupedTransactions = filteredTransactions.reduce((acc: any, transaction) => {
         const date = new Date(transaction.date)
         const dateKey = format(date, "yyyy-MM-dd")
 
@@ -102,7 +93,7 @@ export function TransactionGrid({ onEdit }: TransactionGridProps) {
         return acc
     }, {})
 
-    if (!transactions.length) {
+    if (!filteredTransactions.length) {
         return (
             <div className="text-center py-10 text-muted-foreground">
                 No transactions found.
@@ -264,7 +255,7 @@ export function TransactionGrid({ onEdit }: TransactionGridProps) {
                                                 {hasBreakdowns && isExpanded && (
                                                     <div className="mt-4 rounded-lg border bg-gray-50/50">
                                                         <div className="divide-y divide-gray-100">
-                                                            {transaction.breakdowns.map((breakdown: TransactionBreakdown, index: number) => (
+                                                            {transaction.breakdowns.map((breakdown: any, index: number) => (
                                                                 <div
                                                                     key={breakdown.id}
                                                                     className="flex items-center gap-3 p-3 first:rounded-t-lg last:rounded-b-lg"

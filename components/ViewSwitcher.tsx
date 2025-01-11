@@ -10,17 +10,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 interface ViewSwitcherProps {
-    view: 'table' | 'grid'
-    onViewChange: (view: 'table' | 'grid') => void
+    view: 'table' | 'grid' | 'timeline'
+    onViewChange: (view: 'table' | 'grid' | 'timeline') => void
 }
 
 export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="h-10">
                     {view === 'table' ? <Table2 className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-                    <span className="ml-2 capitalize">{view} View</span>
+                    <span className="ml-2 capitalize">{view === 'grid' ? 'Grid View' : view === 'timeline' ? 'Timeline View' : 'Table View'}</span>
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -28,9 +28,10 @@ export function ViewSwitcher({ view, onViewChange }: ViewSwitcherProps) {
                     <Table2 className="mr-2 h-4 w-4" />
                     Table View
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onViewChange('grid')}>
+
+                <DropdownMenuItem onClick={() => onViewChange('timeline')}>
                     <LayoutGrid className="mr-2 h-4 w-4" />
-                    Grid View
+                    Timeline View
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
