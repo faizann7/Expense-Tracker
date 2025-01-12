@@ -7,15 +7,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { AddTransactionForm } from "./AddTransactionForm"
-
-interface Transaction {
-    id: string
-    type: 'income' | 'expense'
-    amount: number
-    description: string
-    category: string
-    date: Date
-}
+import { Transaction } from "@/contexts/TransactionContext"
 
 interface EditTransactionDialogProps {
     transaction: Transaction

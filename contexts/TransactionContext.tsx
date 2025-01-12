@@ -4,6 +4,7 @@ import { createContext, useContext, ReactNode, useEffect, useState } from 'react
 import { useSearchParams } from 'next/navigation'
 import { categories as defaultCategories } from '@/config/categories'
 import { DateRange } from "react-day-picker"
+import { useToast } from "@/components/ui/use-toast"
 
 interface TransactionBreakdown {
     id: string
@@ -56,6 +57,7 @@ const STORAGE_KEY = 'transactions'
 const CATEGORIES_STORAGE_KEY = 'transaction-categories'
 
 export function TransactionProvider({ children }: { children: ReactNode }) {
+    const { toast } = useToast()
     const [transactions, setTransactions] = useState<Transaction[]>([])
     const [categories, setCategories] = useState<Category[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -87,43 +89,57 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     const category = searchParams.get('category')
     const type = searchParams.get('type')
 
-    const filteredTransactions = transactions.filter(transaction => {
-        if (filters.dateRange?.from && filters.dateRange?.to) {
-            const transactionDate = new Date(transaction.date)
-            if (!(transactionDate >= filters.dateRange.from &&
-                transactionDate <= filters.dateRange.to)) {
+    const filteredTransactions = transactions
+        .filter(transaction => {
+            if (filters.dateRange?.from && filters.dateRange?.to) {
+                const transactionDate = new Date(transaction.date)
+                if (!(transactionDate >= filters.dateRange.from &&
+                    transactionDate <= filters.dateRange.to)) {
+                    return false
+                }
+            }
+
+            if (filters.category && transaction.category !== filters.category) {
                 return false
             }
-        }
 
-        if (filters.category && transaction.category !== filters.category) {
-            return false
-        }
+            if (filters.type && transaction.type !== filters.type) {
+                return false
+            }
 
-        if (filters.type && transaction.type !== filters.type) {
-            return false
-        }
-
-        return true
-    })
+            return true
+        })
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
     // Transaction management functions
     const addTransaction = (data: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
-        const newTransaction = {
+        const newTransaction: Transaction = {
             ...data,
             id: crypto.randomUUID(),
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
         }
-        const updatedTransactions = [newTransaction, ...transactions]
-        setTransactions(updatedTransactions)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions))
+
+        setTransactions(prev => [newTransaction, ...prev])
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([newTransaction, ...transactions]))
+
+        toast({
+            title: "Transaction Added",
+            description: "Your transaction has been successfully added.",
+            variant: "default",
+        })
     }
 
     const deleteTransaction = (id: string) => {
         const updatedTransactions = transactions.filter(t => t.id !== id)
         setTransactions(updatedTransactions)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions))
+
+        toast({
+            title: "Transaction Deleted",
+            description: "Your transaction has been successfully deleted.",
+            variant: "destructive",
+        })
     }
 
     const updateTransaction = (id: string, data: Partial<Transaction>) => {
@@ -134,6 +150,12 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
         )
         setTransactions(updatedTransactions)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions))
+
+        toast({
+            title: "Transaction Updated",
+            description: "Your transaction has been successfully updated.",
+            variant: "default",
+        })
     }
 
     // Category management functions

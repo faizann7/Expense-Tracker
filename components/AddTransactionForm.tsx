@@ -23,21 +23,26 @@ import { useState } from "react"
 
 const breakdownSchema = z.object({
     description: z.string().min(1, "Description is required"),
-    amount: z.string().min(1, "Amount is required").transform(val => parseFloat(val))
+    amount: z.string().min(1, "Amount is required")
 })
 
 const formSchema = z.object({
     type: z.enum(['income', 'expense']),
-    amount: z.string().min(1).transform(val => parseFloat(val)),
+    amount: z.string().min(1, "Amount is required"),
     description: z.string().min(1),
-    category: z.string().min(1),
-    date: z.string().transform(val => new Date(val)),
+    category: z.string().min(1, "Category is required"),
+    date: z.string().min(1, "Date is required"),
     breakdowns: z.array(breakdownSchema).optional()
 }).refine((data) => {
-    if (!data.breakdowns || data.breakdowns.length === 0) return true
+    if (!data.breakdowns || data.breakdowns.length === 0) return true;
 
-    const breakdownTotal = data.breakdowns.reduce((sum, item) => sum + item.amount, 0)
-    return Math.abs(breakdownTotal - data.amount) < 0.01
+    const breakdownTotal = data.breakdowns.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+    const transactionAmount = parseFloat(data.amount);
+
+    console.log("Breakdown Total:", breakdownTotal);
+    console.log("Transaction Amount:", transactionAmount);
+
+    return Math.abs(breakdownTotal - transactionAmount) < 0.01;
 }, {
     message: "Breakdown amounts must equal the total transaction amount",
     path: ["breakdowns"]
@@ -71,7 +76,7 @@ export function AddTransactionForm({ onSuccess, mode = 'add', initialData }: Add
 
     const breakdowns = form.watch("breakdowns") || []
     const transactionAmount = parseFloat(form.watch("amount") || "0")
-    const breakdownsTotal = breakdowns.reduce((sum, item) => sum + (parseFloat(item.amount as any) || 0), 0)
+    const breakdownsTotal = breakdowns.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
     const hasBreakdownError = Math.abs(breakdownsTotal - transactionAmount) >= 0.01
 
     const [breakdownError, setBreakdownError] = useState<string | null>(null)
@@ -80,12 +85,12 @@ export function AddTransactionForm({ onSuccess, mode = 'add', initialData }: Add
         try {
             const dataToSubmit = {
                 ...values,
-                ...(values.breakdowns?.length ? {
-                    breakdowns: values.breakdowns.map(breakdown => ({
-                        ...breakdown,
-                        id: crypto.randomUUID()
-                    }))
-                } : { breakdowns: [] })
+                amount: Number(values.amount),
+                date: values.date,
+                breakdowns: values.breakdowns?.map(b => ({
+                    ...b,
+                    amount: Number(b.amount)
+                })) || []
             }
 
             if (mode === 'edit' && initialData) {
@@ -111,7 +116,7 @@ export function AddTransactionForm({ onSuccess, mode = 'add', initialData }: Add
 
         if (currentBreakdowns.length > 0) {
             const allButLastTotal = currentBreakdowns.slice(0, -1)
-                .reduce((sum, item) => sum + (parseFloat(item.amount as any) || 0), 0)
+                .reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
 
             const remainingAmount = newAmount - allButLastTotal
             if (remainingAmount >= 0) {
@@ -128,7 +133,7 @@ export function AddTransactionForm({ onSuccess, mode = 'add', initialData }: Add
             return true
         }
 
-        const total = breakdowns.reduce((sum, item) => sum + (parseFloat(item.amount as any) || 0), 0)
+        const total = breakdowns.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
         const difference = Math.abs(total - transactionAmount)
 
         if (difference >= 0.01) {

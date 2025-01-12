@@ -40,6 +40,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination"
+import { EditTransactionDialog } from "@/components/EditTransactionDialog"
 
 interface Transaction {
     id: string
@@ -63,6 +64,8 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
     const [expandedBreakdown, setExpandedBreakdown] = useState<string | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const pageSize = 10
+    const [isEditDialogOpen, setEditDialogOpen] = useState(false)
+    const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
 
     const columns: ColumnDef<Transaction>[] = [
         {
@@ -161,7 +164,7 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-[160px]">
-                            <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                            <DropdownMenuItem onClick={() => handleEdit(row.original)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                             </DropdownMenuItem>
@@ -215,6 +218,11 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
         }
 
         return pages
+    }
+
+    const handleEdit = (transaction: Transaction) => {
+        setTransactionToEdit(transaction)
+        setEditDialogOpen(true)
     }
 
     return (
@@ -399,6 +407,13 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
                         </PaginationContent>
                     </Pagination>
                 </div>
+            )}
+
+            {isEditDialogOpen && transactionToEdit && (
+                <EditTransactionDialog
+                    transaction={transactionToEdit}
+                    onClose={() => setEditDialogOpen(false)}
+                />
             )}
         </div>
     )
