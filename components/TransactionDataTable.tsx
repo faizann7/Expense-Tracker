@@ -74,7 +74,7 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
             cell: ({ row }) => {
                 const date = new Date(row.getValue("date"))
                 return (
-                    <span className="text-gray-600">
+                    <span className="text-gray-600 whitespace-nowrap">
                         {format(date, "MMM dd, yyyy")}
                     </span>
                 )
@@ -98,14 +98,7 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
             cell: ({ row }) => {
                 const category = categories.find(cat => cat.value === row.getValue("category"))
                 return (
-                    <div className="flex items-center gap-2">
-                        <span className="font-medium">{category?.label || row.getValue("category")}</span>
-                        {row.original.breakdowns?.length > 0 && (
-                            <Badge variant="secondary" className="text-xs">
-                                {row.original.breakdowns.length} items
-                            </Badge>
-                        )}
-                    </div>
+                    <span className="font-medium">{category?.label || row.getValue("category")}</span>
                 )
             },
         },
@@ -120,17 +113,26 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
             accessorKey: "amount",
             header: "Amount",
             cell: ({ row }) => {
-                const amount = row.getValue("amount") as number
-                const type = row.getValue("type") as 'income' | 'expense'
+                const amount = row.getValue("amount") as number;
+                const type = row.getValue("type") as 'income' | 'expense';
+                const breakdownCount = row.original.breakdowns?.length || 0; // Get the breakdown count
+
                 return (
-                    <span className={cn(
-                        "font-medium",
-                        type === 'income' ? 'text-green-600' : 'text-black'
-                    )}>
-                        {type === 'income' ? '+' : '-'}
-                        {formatCurrency(amount)}
-                    </span>
-                )
+                    <div className="flex items-center">
+                        <span className={cn(
+                            "font-medium",
+                            type === 'income' ? 'text-green-600' : 'text-black'
+                        )}>
+                            {type === 'income' ? '+' : '-'}
+                            {formatCurrency(amount)}
+                        </span>
+                        {breakdownCount > 0 && (
+                            <Badge variant="secondary" className="ml-2 text-xs">
+                                {breakdownCount} items
+                            </Badge>
+                        )}
+                    </div>
+                );
             },
         },
         {

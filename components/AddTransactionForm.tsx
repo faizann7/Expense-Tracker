@@ -258,9 +258,9 @@ export function AddTransactionForm({ onSuccess, mode = 'add', initialData }: Add
                     control={form.control}
                     name="date"
                     render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Date</FormLabel>
-                            <FormControl>
+                        <FormItem className="flex items-center">
+                            <FormLabel className="mr-2">Date</FormLabel>
+                            <FormControl className="flex-1">
                                 <Input type="date" {...field} />
                             </FormControl>
                             <FormMessage />
