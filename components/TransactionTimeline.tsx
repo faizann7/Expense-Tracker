@@ -38,6 +38,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { Transaction } from "@/contexts/TransactionContext"
 
 interface TransactionTimelineProps {
     onEdit: (transaction: any) => void
@@ -158,8 +159,8 @@ export function TransactionTimeline({ onEdit }: TransactionTimelineProps) {
                             {/* Transactions list with improved spacing */}
                             <div className="ml-7 space-y-4">
                                 {group.transactions
-                                    .sort((a: any, b: any) => b.amount - a.amount)
-                                    .map((transaction: any) => {
+                                    .sort((a: Transaction, b: Transaction) => b.amount - a.amount)
+                                    .map((transaction: Transaction) => {
                                         const category = categories.find(cat => cat.value === transaction.category)
                                         const IconComponent = categoryIcons[transaction.category] || DollarSign
                                         const hasBreakdowns = transaction.breakdowns?.length > 0
@@ -234,12 +235,18 @@ export function TransactionTimeline({ onEdit }: TransactionTimelineProps) {
                                                                     </Button>
                                                                 </DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end" className="w-[160px]">
-                                                                    <DropdownMenuItem onClick={() => onEdit(transaction)}>
+                                                                    <DropdownMenuItem onClick={() => {
+                                                                        console.log("Edit clicked for transaction:", transaction); // Debugging line
+                                                                        onEdit(transaction);
+                                                                    }}>
                                                                         <Edit className="mr-2 h-4 w-4" />
                                                                         Edit
                                                                     </DropdownMenuItem>
                                                                     <DropdownMenuItem
-                                                                        onClick={() => deleteTransaction(transaction.id)}
+                                                                        onClick={() => {
+                                                                            console.log("Delete clicked for transaction:", transaction.id); // Debugging line
+                                                                            deleteTransaction(transaction.id);
+                                                                        }}
                                                                         className="text-red-600 hover:text-red-700"
                                                                     >
                                                                         <Trash className="mr-2 h-4 w-4" />

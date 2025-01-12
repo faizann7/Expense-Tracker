@@ -23,11 +23,7 @@ export function EditTransactionDialog({ transaction, onClose }: EditTransactionD
                 </DialogHeader>
                 <AddTransactionForm
                     mode="edit"
-                    initialData={{
-                        ...transaction,
-                        amount: transaction.amount.toString(),
-                        date: new Date(transaction.date).toISOString().split('T')[0]
-                    }}
+                    initialData={transaction}
                     onSuccess={onClose}
                 />
             </DialogContent>

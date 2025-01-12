@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { categories as defaultCategories } from '@/config/categories'
 import { DateRange } from "react-day-picker"
 import { useToast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify";
 
 interface TransactionBreakdown {
     id: string
@@ -131,15 +132,16 @@ export function TransactionProvider({ children }: { children: ReactNode }) {
     }
 
     const deleteTransaction = (id: string) => {
-        const updatedTransactions = transactions.filter(t => t.id !== id)
-        setTransactions(updatedTransactions)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions))
+        const updatedTransactions = transactions.filter(t => t.id !== id);
+        setTransactions(updatedTransactions);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTransactions));
 
+        // Show toast without undo option
         toast({
             title: "Transaction Deleted",
             description: "Your transaction has been successfully deleted.",
             variant: "destructive",
-        })
+        });
     }
 
     const updateTransaction = (id: string, data: Partial<Transaction>) => {

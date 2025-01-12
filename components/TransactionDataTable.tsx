@@ -41,6 +41,7 @@ import {
     PaginationPrevious,
 } from "@/components/ui/pagination"
 import { EditTransactionDialog } from "@/components/EditTransactionDialog"
+import { ConfirmationDialog } from "@/components/ConfirmationDialog"
 
 interface Transaction {
     id: string
@@ -66,6 +67,8 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
     const pageSize = 10
     const [isEditDialogOpen, setEditDialogOpen] = useState(false)
     const [transactionToEdit, setTransactionToEdit] = useState<Transaction | null>(null)
+    const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false)
+    const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null)
 
     const columns: ColumnDef<Transaction>[] = [
         {
@@ -171,7 +174,7 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
                                 Edit
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                onClick={() => deleteTransaction(row.original.id)}
+                                onClick={() => handleDelete(row.original)}
                                 className="text-red-600 hover:text-red-700"
                             >
                                 <Trash className="mr-2 h-4 w-4" />
@@ -227,25 +230,30 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
         setEditDialogOpen(true)
     }
 
+    const handleDelete = (transaction: Transaction) => {
+        setTransactionToDelete(transaction)
+        setConfirmDialogOpen(true)
+    }
+
+    const confirmDelete = () => {
+        if (transactionToDelete) {
+            deleteTransaction(transactionToDelete.id)
+            setTransactionToDelete(null)
+        }
+    }
+
     return (
         <div className="space-y-4">
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
+                        <TableRow>
+                            <TableHead className="min-w-[150px]">Date</TableHead>
+                            <TableHead className="w-1/4">Type</TableHead>
+                            <TableHead className="w-1/4">Category</TableHead>
+                            <TableHead className="w-1/4">Description</TableHead>
+                            <TableHead className="w-1/4">Amount</TableHead>
+                        </TableRow>
                     </TableHeader>
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
@@ -417,6 +425,14 @@ export function TransactionDataTable({ onEdit }: TransactionDataTableProps) {
                     onClose={() => setEditDialogOpen(false)}
                 />
             )}
+
+            <ConfirmationDialog
+                isOpen={isConfirmDialogOpen}
+                onClose={() => setConfirmDialogOpen(false)}
+                onConfirm={confirmDelete}
+                title="Confirm Deletion"
+                description="Are you sure you want to delete this transaction? This action cannot be undone."
+            />
         </div>
     )
 }
